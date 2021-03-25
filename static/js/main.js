@@ -6,26 +6,34 @@ async function raditNoliktavasDatus(tipsAtlase)
 
   if(tipsAtlase==undefined)
   {
-    let vielasNoServera = await fetch('/api/v1/vielas');
-    jsonVielas = await vielasNoServera.json();
+    let vielasNoServera = await fetch('/api/v2/vielas');
+    atbilde = await vielasNoServera.json();
+    if (atbilde.atb.length>0)alert(atbilde.atb);
+    jsonVielas=atbilde.dati;
     jsonVielas = pievienotIerakstuParKategoriju(jsonVielas, 'viela');
     //
-    let inventarsNoServera = await fetch('/api/v1/inventars');
-    jsonInventars = await inventarsNoServera.json();
+    let inventarsNoServera = await fetch('/api/v2/inventars');
+    atbilde = await inventarsNoServera.json();
+    if (atbilde.atb.length>0)alert(atbilde.atb);
+    jsonInventars=atbilde.dati;
     jsonInventars = pievienotIerakstuParKategoriju(jsonInventars, 'inventars');
   }
   else if(tipsAtlase=='viela')
   {
     //jsonVielas = await iegutDatusNoApi('/api/v1/vielas');
-    let vielasNoServera = await fetch('/api/v1/vielas');
-    jsonVielas = await vielasNoServera.json();
+    let vielasNoServera = await fetch('/api/v2/vielas');
+    atbilde = await vielasNoServera.json();
+    if (atbilde.atb.length>0)alert(atbilde.atb);
+    jsonVielas=atbilde.dati;
     jsonVielas = pievienotIerakstuParKategoriju(jsonVielas, 'viela');
   }
   else if(tipsAtlase=='aprikojums')
   {
     //jsonInventars = await iegutDatusNoApi('/api/v1/inventars');
-    let inventarsNoServera = await fetch('/api/v1/inventars');
-    jsonInventars = await inventarsNoServera.json();
+    let inventarsNoServera = await fetch('/api/v2/inventars');
+    atbilde = await inventarsNoServera.json();
+    if (atbilde.atb.length>0)alert(atbilde.atb);
+    jsonInventars=atbilde.dati;
     jsonInventars = pievienotIerakstuParKategoriju(jsonInventars, 'inventars');
   }
 
@@ -53,7 +61,7 @@ async function raditNoliktavasDatus(tipsAtlase)
       <td> `+datiNoliktava[i]['tips']+` </td>
       <td> `+datiNoliktava[i]['apakstips']+` </td>
       <td> `+datiNoliktava[i]['skaits']+` </td>
-      <td> `+datiNoliktava[i]['daudzums']+` </td>
+      <td> `+datiNoliktava[i]['daudzums']+datiNoliktava[i]['mervienibas']+` </td>
       <td> `+datiNoliktava[i]['komentari']+` </td>
       <td onclick="dzestVieluAprikojumu(`+datiNoliktava[i]['id']+`,'`+kategorija+`')"> ❌ </td>
       </tr>`;
@@ -90,15 +98,15 @@ let requestBodyString = JSON.stringify(requestBodyJson);
 
 
 let request = await fetch('/api/v1/'+document.querySelector('#kategorija').value,
-         		{
+            {
             method:"POST",
-  					headers:
-  					{
+            headers:
+            {
             'X-API-KEY': 'asdf',
             'Content-Type': 'application/json'
             },
             body:requestBodyString
-        		});
+            });
 
 let atbilde = await request.json();
 //console.log(atbilde);
@@ -149,6 +157,6 @@ async function dzestVieluAprikojumu(id,kategorija)
       alert('Atbilde no servera: izdzēsts ieraksts `'+kategorija+'` ar id:'+atbilde);
 
       document.querySelector('#'+kategorija+atbilde).style.display='none';
-	}
+  }
   
 }

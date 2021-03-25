@@ -1,5 +1,6 @@
 from flask import Flask, json, jsonify, render_template, request
 import dati
+import sqlite3
 
 
 app = Flask(__name__)
@@ -49,6 +50,39 @@ def vielas():
     return jsonify(dati)
 
 
+## 4. Individuālie uzdevumi
+# 1. Nomainiet arī vielām datu avotu līdzīgi, kā to darījām ar inventāru
+@app.route('/api/v2/vielas', methods=['GET'])
+def v2vielas():
+    try:
+      with sqlite3.connect("Dati.db") as conn:
+        c = conn.cursor()
+        # Kolonu secībai ir jābūt tādai pašai, kā mainīgajā column_names
+        c.execute("SELECT ID, NOSAUKUMS, TIPS, APAKSTIPS, SKAITS, DAUDZUMS, MERVIENIBAS, KOMENTARI FROM Vielas")
+        data = c.fetchall()
+        jsonData = []
+        column_names = ['id', 'nosaukums', 'tips', 'apakstips', 'skaits', 'daudzums', 'mervienibas', 'komentari']
+        for row in data:
+          # Savienojam kolonu nosaukumus ar datiem no tabulas
+          info = dict(zip(column_names, row))
+          # Papildinam JSON failu ar jaunu rindiņu katrā cikla izpildē
+          jsonData.append(info)
+        # izveido atbildi ko sūtīt web lapai
+        atbilde={"atb":""}
+        atbilde["dati"]=jsonData
+    except:
+      conn.rollback()
+      # atbilde, ja problēmas ar db
+      atbilde={"atb":"Vielas nedabūju"}
+      atbilde["dati"]=[]
+    finally:
+      conn.commit()
+      c.close()
+      conn.close()    
+      return atbilde
+
+
+
 @app.route('/api/v1/inventars', methods=['GET'])
 def inventars():
     # atveram datni
@@ -58,6 +92,41 @@ def inventars():
     
     # pārveidojam par string pirms atgriežam
     return jsonify(dati)
+
+@app.route('/api/v2/inventars', methods=['GET'])
+def v2inventars():
+    try:
+      # Izveidojam savienojumu ar Datubāzi
+      with sqlite3.connect("Dati.db") as conn:
+        # Izveidojam kursoru
+        c = conn.cursor()
+        # Izsaucam datu no Inventars tabulas. DAUDZUMS paņemam kā tukšu kolonu, lai rezultātos nebūtu Undefied
+        c.execute("SELECT ID, NOSAUKUMS, TIPS, APAKSTIPS, '' AS DAUDZUMS, '' AS MERVIENIBAS, SKAITS, KOMENTARI FROM Inventars")
+        # Ielasam datus mainīgajā
+        data = c.fetchall()
+        jsonData = ""
+        # Kolonu nosaukumi, kādi tiks izmantoti JSON failā. Tiem ir jābūt tādā pašā secībā, kā kolonas lasām no tabulas SELECT izsaukumā
+        column_names = ['id','nosaukums','tips','apakstips','daudzums', 'mervienibas', 'skaits', 'komentari']
+        for row in data:
+          # Savienojam kolonu nosaukums ar datiem no tabulas
+          info = dict(zip(column_names, row))
+          # Pa vienai rindiņai papildimām jsonData mainīgo, līdz visi dati ir nolasīti no tabulas. Aiz katra ieraksta pieliekam komatu, lai atdalītu ierakstus.
+          jsonData = jsonData + json.dumps(info) + ','
+        # Noņemam pēdējo lieko komatu
+        jsonData = jsonData[:-1]
+        # Ieliekam visus datus kvadrātiekavās
+        jsonData = "[" + jsonData + "]"        
+        atbilde={"atb":""}
+        atbilde["dati"]=json.loads(jsonData)
+    except:
+      conn.rollback()
+      atbilde={"atb":"Inventāru nedabūju"}
+      atbilde["dati"]=[]
+    finally:
+      conn.commit()
+      c.close()
+      conn.close()    
+      return atbilde
 
 
 @app.route('/api/v1/viela/<vielasID>', methods=['GET'])
